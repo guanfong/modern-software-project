@@ -1,0 +1,42 @@
+# Next.js lint + production build (mirrors Amplify build sanity check).
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, "chore/**"]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    branches: [main, "chore/**"]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
+jobs:
+  frontend-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Production build
+        env:
+          # Build does not call the backend; rewrites only need a defined URL.
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+        run: npm run build

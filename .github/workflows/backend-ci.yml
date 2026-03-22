@@ -8,6 +8,8 @@ on:
       - "backend/**"
       - "main.py"
       - "requirements.txt"
+      - "tests/**"
+      - "pytest.ini"
       - "alembic.ini"
       - "migrations/**"
       - ".github/workflows/backend-ci.yml"
@@ -17,6 +19,8 @@ on:
       - "backend/**"
       - "main.py"
       - "requirements.txt"
+      - "tests/**"
+      - "pytest.ini"
       - "alembic.ini"
       - "migrations/**"
       - ".github/workflows/backend-ci.yml"
@@ -39,10 +43,5 @@ jobs:
       - name: Byte-compile Python (syntax check)
         run: python -m compileall -q main.py backend
 
-      - name: Smoke import (minimal env; avoids DB migrations in CI)
-        env:
-          USE_DATABASE: "false"
-          JWT_SECRET: ci-not-a-real-secret
-          SECRET_KEY: ci-not-a-real-secret
-          OPENAI_API_KEY: sk-ci-placeholder
-        run: python -c "import main; print('import ok')"
+      - name: Pytest (API smoke tests)
+        run: python -m pytest tests/
