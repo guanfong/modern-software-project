@@ -16,6 +16,9 @@ backend/data/
 .vscode/
 .idea/
 
+# Local pip --target scratch (do not commit)
+_crew_stash/
+
 # Python cache
 __pycache__/
 *.py[cod]
