@@ -1,0 +1,76 @@
+# Deploy the FastAPI app on EC2: git pull, pip install, systemd restart.
+# Amplify only builds the frontend; this workflow is the backend counterpart.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   EC2_HOST          — public IPv4 or DNS of the instance
+#   EC2_USERNAME      — e.g. ec2-user
+#   EC2_SSH_KEY       — full PEM private key (the key pair you use to SSH)
+#
+# Optional repository variables (Settings → Secrets and variables → Actions → Variables):
+#   APP_PATH          — default /home/ec2-user/app
+#   SYSTEMD_SERVICE   — default recruiter-api
+#
+# EC2 prerequisites:
+#   - Repo cloned at APP_PATH; remote branch exists (same GitHub repo).
+#   - ec2-user can sudo systemctl restart without a password (common via /etc/sudoers.d/).
+#   - Private repos: add a deploy key or use HTTPS + credential helper on the instance.
+#
+name: Backend deploy (EC2)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to checkout on the server"
+        required: true
+        default: "main"
+  push:
+    branches:
+      - main
+      - "chore/**"
+    paths:
+      - "backend/**"
+      - "main.py"
+      - "requirements.txt"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "alembic.ini"
+      - "migrations/**"
+      - ".github/workflows/backend-deploy-ec2.yml"
+
+concurrency:
+  group: backend-deploy-ec2
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.EC2_HOST != '' && secrets.EC2_USERNAME != '' && secrets.EC2_SSH_KEY != '' }}
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          GIT_BRANCH: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref_name }}
+          APP_PATH: ${{ vars.APP_PATH || '/home/ec2-user/app' }}
+          SYSTEMD_SERVICE: ${{ vars.SYSTEMD_SERVICE || 'recruiter-api' }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          envs: GIT_BRANCH,APP_PATH,SYSTEMD_SERVICE
+          script: |
+            set -euo pipefail
+            cd "$APP_PATH"
+            git fetch origin
+            git checkout "$GIT_BRANCH"
+            git pull origin "$GIT_BRANCH"
+            if [ -f .venv/bin/activate ]; then
+              # shellcheck source=/dev/null
+              . .venv/bin/activate
+            elif [ -f venv/bin/activate ]; then
+              . venv/bin/activate
+            fi
+            pip install -r requirements.txt
+            sudo systemctl restart "$SYSTEMD_SERVICE"

@@ -1,0 +1,48 @@
+# Continuous integration for the FastAPI backend (no deploy).
+name: Backend CI
+
+on:
+  push:
+    branches: [main, "chore/**"]
+    paths:
+      - "backend/**"
+      - "main.py"
+      - "requirements.txt"
+      - "alembic.ini"
+      - "migrations/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main, "chore/**"]
+    paths:
+      - "backend/**"
+      - "main.py"
+      - "requirements.txt"
+      - "alembic.ini"
+      - "migrations/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  backend-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Byte-compile Python (syntax check)
+        run: python -m compileall -q main.py backend
+
+      - name: Smoke import (minimal env; avoids DB migrations in CI)
+        env:
+          USE_DATABASE: "false"
+          JWT_SECRET: ci-not-a-real-secret
+          SECRET_KEY: ci-not-a-real-secret
+          OPENAI_API_KEY: sk-ci-placeholder
+        run: python -c "import main; print('import ok')"
