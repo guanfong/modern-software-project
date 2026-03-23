@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { formatExtractedFields } from '../lib/formatExtractedFields';
 import axios from '../lib/axios';
+import { getApiErrorMessage } from '../lib/apiErrorMessage';
 import { FiUpload, FiMic, FiStopCircle, FiX } from 'react-icons/fi';
 
 export default function HRBriefingsPage() {
@@ -65,17 +66,13 @@ export default function HRBriefingsPage() {
 
     try {
       // Do not set Content-Type manually — axios must add the multipart boundary.
-      await axios.post('/api/hr-briefings', formData);
+      // Transcription + CrewAI often exceeds the default 30s axios timeout.
+      await axios.post('/api/hr-briefings', formData, { timeout: 300000 });
       fetchBriefings();
       setSelectedRoles([]);
     } catch (error: unknown) {
       console.error('Error uploading briefing:', error);
-      const ax = error as { response?: { data?: { detail?: string; message?: string } } };
-      const detail =
-        ax.response?.data?.detail ||
-        ax.response?.data?.message ||
-        (error instanceof Error ? error.message : null);
-      alert(detail ? `Failed to upload HR briefing: ${detail}` : 'Failed to upload HR briefing');
+      alert(`Failed to upload HR briefing: ${getApiErrorMessage(error)}`);
     } finally {
       setIsUploading(false);
     }
