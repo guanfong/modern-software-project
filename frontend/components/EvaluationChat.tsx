@@ -114,7 +114,10 @@ export default function EvaluationChat({ roleId, messages, onMessagesChange, onC
         {messages.length === 0 && (
           <div className="text-center text-gray-500 py-8">
             <p>Start a conversation to evaluate candidates</p>
-            <p className="text-sm mt-2">Try asking: "Who is the best fit for this role?"</p>
+            <p className="text-sm mt-2">
+              Try asking:{' '}
+              <span className="whitespace-nowrap">&ldquo;Who is the best fit for this role?&rdquo;</span>
+            </p>
           </div>
         )}
 

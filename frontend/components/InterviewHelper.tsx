@@ -638,7 +638,10 @@ export default function InterviewHelper({ roleId, candidateId, candidate, jd, br
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            <p>Click "Get Guidance" to receive AI-powered interview suggestions</p>
+            <p>
+              Click <span className="whitespace-nowrap">&ldquo;Get Guidance&rdquo;</span> to receive AI-powered interview
+              suggestions
+            </p>
           </div>
         )}
       </div>

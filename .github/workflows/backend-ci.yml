@@ -38,10 +38,16 @@ jobs:
           cache-dependency-path: requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Byte-compile Python (syntax check)
         run: python -m compileall -q main.py backend
 
       - name: Pytest (API smoke tests)
-        run: python -m pytest tests/
+        env:
+          CI: "true"
+          # Avoid CrewAI/colorama wrapping test runner streams on some runners.
+          NO_COLOR: "1"
+        run: python -m pytest tests/ -v --tb=short
