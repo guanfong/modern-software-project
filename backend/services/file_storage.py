@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
+from .audio_transcription import resolve_hr_briefing_audio_extension
+
 
 def _resolve_data_dir() -> Path:
     """Resolve data directory relative to backend package, so it works regardless of cwd."""
@@ -375,15 +377,15 @@ class FileStorageService:
             json.dump(candidate, f, indent=2)
         return candidate
 
-    def save_hr_briefing(self, filename: Optional[str], content: bytes):
+    def save_hr_briefing(
+        self, filename: Optional[str], content: bytes, content_type: Optional[str] = None
+    ):
         """Save HR briefing audio file (bytes from UploadFile.read())."""
         briefing_id = str(uuid.uuid4())
         briefing_dir = self.hr_briefings_dir / briefing_id
         briefing_dir.mkdir(parents=True, exist_ok=True)
 
-        ext = Path(filename).suffix if filename else ".mp3"
-        if not ext or ext == ".":
-            ext = ".mp3"
+        ext = resolve_hr_briefing_audio_extension(filename, content_type, content)
         audio_path = briefing_dir / f"briefing{ext}"
 
         with open(audio_path, "wb") as f:

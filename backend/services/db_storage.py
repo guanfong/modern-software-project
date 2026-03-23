@@ -27,6 +27,7 @@ from backend.models.role_hr_briefings import RoleHRBriefing
 from backend.models.interviews import Interview as InterviewModel
 from backend.models.evaluation_chats import EvaluationChat as EvaluationChatModel
 from backend.models.consent_templates import ConsentTemplate as ConsentTemplateModel
+from backend.services.audio_transcription import resolve_hr_briefing_audio_extension
 from sqlalchemy.orm import sessionmaker
 
 
@@ -418,13 +419,13 @@ class DatabaseStorageService:
         return self.get_candidate(role_id, candidate_id)
 
     # ---------- HR Briefings ----------
-    def save_hr_briefing(self, filename: Optional[str], content: bytes) -> tuple:
+    def save_hr_briefing(
+        self, filename: Optional[str], content: bytes, content_type: Optional[str] = None
+    ) -> tuple:
         briefing_id = str(uuid.uuid4())
         briefings_dir = self.base_dir / "hr_briefings" / briefing_id
         briefings_dir.mkdir(parents=True, exist_ok=True)
-        ext = Path(filename).suffix if filename else ".mp3"
-        if not ext or ext == ".":
-            ext = ".mp3"
+        ext = resolve_hr_briefing_audio_extension(filename, content_type, content)
         audio_path = briefings_dir / f"briefing{ext}"
         with open(audio_path, "wb") as f:
             f.write(content)

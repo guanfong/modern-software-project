@@ -488,7 +488,9 @@ async def upload_hr_briefing(
         [r.strip() for r in role_ids.split(",") if r.strip()] if role_ids else []
     )
     # Save file (returns tuple: file_path, briefing_id)
-    file_path, briefing_id = file_storage.save_hr_briefing(file.filename, content)
+    file_path, briefing_id = file_storage.save_hr_briefing(
+        file.filename, content, file.content_type
+    )
 
     # Transcribe audio (use async version)
     transcription = await audio_transcription.transcribe_async(file_path)
