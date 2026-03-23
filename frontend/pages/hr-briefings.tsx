@@ -121,13 +121,13 @@ export default function HRBriefingsPage() {
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4 items-center">
             <label className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 cursor-pointer">
               <FiUpload className="w-5 h-5" />
               {isUploading ? 'Uploading...' : 'Upload Audio File'}
               <input
                 type="file"
-                accept="audio/*"
+                accept=".mp3,.wav,.m4a,.webm,.ogg,.oga,.flac,.mp4,.mpeg,.mpga,audio/mpeg,audio/mp4,audio/webm,audio/wav"
                 onChange={handleFileUpload}
                 className="hidden"
                 disabled={isUploading}
@@ -156,6 +156,11 @@ export default function HRBriefingsPage() {
               )}
             </button>
           </div>
+          <p className="text-xs text-gray-500 mt-3 max-w-3xl">
+            Best: mp3, wav, m4a, webm, or ogg. Formats like aac or some phone voice memos need{' '}
+            <code className="bg-gray-100 px-1 rounded">ffmpeg</code> on the API server for auto-conversion, or convert
+            the file locally first.
+          </p>
         </div>
 
         <div className="space-y-4">
