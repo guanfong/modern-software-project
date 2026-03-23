@@ -6,6 +6,9 @@
 #   EC2_USERNAME      — e.g. ec2-user
 #   EC2_SSH_KEY       — full PEM private key (the key pair you use to SSH)
 #
+# Note: GitHub does not allow `secrets` in job-level `if:`. We detect missing
+# secrets in a step (via env) and skip deploy with a warning.
+#
 # Optional repository variables (Settings → Secrets and variables → Actions → Variables):
 #   APP_PATH          — default /home/ec2-user/app
 #   SYSTEMD_SERVICE   — default recruiter-api
@@ -45,10 +48,24 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ secrets.EC2_HOST != '' && secrets.EC2_USERNAME != '' && secrets.EC2_SSH_KEY != '' }}
 
     steps:
+      - name: Check EC2 secrets configured
+        id: ec2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          if [ -n "$EC2_HOST" ] && [ -n "$EC2_USERNAME" ] && [ -n "$EC2_SSH_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::EC2 deploy skipped — add repository secrets EC2_HOST, EC2_USERNAME, and EC2_SSH_KEY."
+          fi
+
       - name: Deploy over SSH
+        if: steps.ec2.outputs.ready == 'true'
         uses: appleboy/ssh-action@v1.2.0
         env:
           GIT_BRANCH: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref_name }}
